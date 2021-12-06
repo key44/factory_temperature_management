@@ -6,8 +6,8 @@
 #include <time.h>
 
 //-------------------------設定------------------------------//
-const char* ssid = "Higashine07g";//wifiのSSID
-const char* password = "musenyamamoto";//wifiのパスワード
+const char* ssid = "SSID";//wifiのSSID
+const char* password = "PASSWORD";//wifiのパスワード
 String locat = "工場１";//計測場所名
 int interval = 60000;//データの更新間隔（ms）
 //----------------------------------------------------------//
