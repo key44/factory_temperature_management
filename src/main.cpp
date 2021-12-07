@@ -10,8 +10,8 @@ const char* ssid = "SSID";//wifiのSSID
 const char* password = "PASSWORD";//wifiのパスワード
 String locat = "工場１";//計測場所名
 int interval = 60000;//データの更新間隔（ms）
+const char* url = "URL";//json受け取りサーバー
 //----------------------------------------------------------//
-const char* url = "http://168.138.52.183:9200/temp/_doc/";
 
 #define JST 3600* 0
 String json_text ="";
