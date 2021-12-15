@@ -98,4 +98,5 @@ void loop() {
   M5.Lcd.printf("Temp: %2.1f  \r\nHumi: %2.0f%%  \r\nPress:%2.0fhPa\r\n", tmp, hum, pressure/100);
 
   delay(interval);
+
 }
