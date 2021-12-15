@@ -62,7 +62,7 @@ void loop() {
   char date[64];
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", localtime(&t));
   Serial.println(date);
-  json_text ="{\"location\":\"" + locat + "\",\"date\": \"" + date + "\",\"temp\": " + tmp + ",\"humid\": "+ hum/100 + "}";
+  json_text ="{\"location\":\"" + locat + "\",\"date\": \"" + date + "\",\"temp\": " + tmp + ",\"humid\": " + hum/100 + ",\"press\":" + pressure/100 + "}";
 
 
   Serial.print(json_text);
@@ -73,7 +73,6 @@ void loop() {
 
     http.begin(url);  //curlコマンドと同じURi『http://192.168.0.100/datastore/ext/obank/2/ch/0/name 』
     http.addHeader("Content-Type", "application/json");
-    //http.PUT("{\"mappings\":{\"properties\":{\"location\":{\"type\":\"keyword\"},\"date\":{\"type\":\"date\",\"format\":\"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis\"},\"temp\":{\"type\":\"float\"},\"humid\":{\"type\":\"float\"}}}}");
     int httpResponseCode = http.POST(json_text);  //curlコマンドと同じ内容のJSON『{\"value\":\"My favorite channel\"} 』
     if (httpResponseCode > 0) {
 
