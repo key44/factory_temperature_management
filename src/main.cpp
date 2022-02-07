@@ -4,19 +4,26 @@
 #include <HTTPClient.h>
 #include "UNIT_ENV.h"
 #include <time.h>
+#include <WiFiMulti.h>
+#include <ArduinoJson.h>
 
 //-------------------------設定------------------------------//
-const char* ssid = "SSID";//wifiのSSID
-const char* password = "PASSWORD";//wifiのパスワード
-String locat = "工場１";//計測場所名
-int interval = 60000;//データの更新間隔（ms）
-const char* url = "URL";//json受け取りサーバー
+String locat = "生産技術";//計測場所名
+int interval = 30000;//データの更新間隔（ms）
+const char* url = "https://hogehoge";//json受け取りサーバー
+
+char * wifi_setup[] = {
+  //"SSID","password",
+  "SSID","password"
+};
 //----------------------------------------------------------//
 
+int wifi_no = sizeof(wifi_setup)/sizeof(wifi_setup[0]) -1;
 #define JST 3600* 0
 String json_text ="";
 SHT3X sht30;
 QMP6988 qmp6988;
+WiFiMulti wifiMulti;
 
 float tmp = 0.0;
 float hum = 0.0;
@@ -28,18 +35,20 @@ void setup() {
 
   M5.begin(); //Init M5Stack.  初始化M5Stack
   M5.Lcd.setRotation(3);
-
-  WiFi.begin(ssid, password);
-  Serial.println("Connecting");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  for  (int i = 0; i < wifi_no; i= i+2) {
+    wifiMulti.addAP(wifi_setup[i], wifi_setup[i+1]);
   }
-  Serial.println("");
-  Serial.print("Connected to WiFi network with IP Address: ");
-  Serial.println(WiFi.localIP());
+  delay(200);
 
-  Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
+  if(wifiMulti.run() == WL_CONNECTED) {
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  }
+
+  Serial.println("Connecting");
+  Serial.println(WiFi.localIP());
 
   M5.lcd.setTextSize(2);
   Wire.begin();
@@ -60,20 +69,27 @@ void loop() {
   time_t t;
   t = time(NULL);
   char date[64];
+  StaticJsonDocument<128> doc;//Json形式を定義
+  char pubMessage[256];
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", localtime(&t));
-  Serial.println(date);
-  json_text ="{\"location\":\"" + locat + "\",\"date\": \"" + date + "\",\"temp\": " + tmp + ",\"humid\": " + hum/100 + ",\"press\":" + pressure/100 + "}";
 
+  //JSONメッセージの作成
+  doc["location"] = locat;
+  doc["timestamp"] = date;
+  doc["temp"] = tmp;
+  doc["humid"] = hum/100;
+  doc["press"] = pressure/100;
+  serializeJson(doc, pubMessage);
 
-  Serial.print(json_text);
+  Serial.print(pubMessage);
 
   if (WiFi.status() == WL_CONNECTED) {
 
     HTTPClient http;
 
-    http.begin(url);  //curlコマンドと同じURi『http://192.168.0.100/datastore/ext/obank/2/ch/0/name 』
+    http.begin(url);  
     http.addHeader("Content-Type", "application/json");
-    int httpResponseCode = http.POST(json_text);  //curlコマンドと同じ内容のJSON『{\"value\":\"My favorite channel\"} 』
+    int httpResponseCode = http.POST(pubMessage);
     if (httpResponseCode > 0) {
 
       String response = http.getString();
@@ -93,7 +109,7 @@ void loop() {
   } else {
     Serial.println("Error in WiFi connection");
   }
-  M5.lcd.fillRect(0,20,100,60,BLACK); //Fill the screen with black (to clear the screen).  将屏幕填充黑色(用来清屏)
+  M5.lcd.fillRect(0,20,100,60,BLACK); 
   M5.lcd.setCursor(0,20);
   M5.Lcd.printf("Temp: %2.1f  \r\nHumi: %2.0f%%  \r\nPress:%2.0fhPa\r\n", tmp, hum, pressure/100);
 
